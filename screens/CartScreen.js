@@ -35,11 +35,11 @@ export default function CartScreen({ navigation }) {
 
 const renderCartItem = ({ item }) => (
   <View style={styles.cartItem}>
-    <View style={[styles.productColor, { backgroundColor: item.color }]} />
+    {/* <View style={[styles.productColor, { backgroundColor: item.color }]} /> */}
     <Image source={item.image} style={styles.productImage} />
     <View style={styles.productInfo}>
       <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
+      <Text style={styles.productPrice}>£{item.price.toFixed(2)}</Text>
     </View>
     <View style={styles.quantityContainer}>
       <TouchableOpacity style={styles.quantityButton}>
@@ -57,15 +57,15 @@ const CartSummary = () => (
   <View style={styles.cartSummary}>
     <View style={styles.summaryRow}>
       <Text style={styles.summaryText}>Subtotal</Text>
-      <Text style={styles.summaryText}>$29.97</Text>
+      <Text style={styles.summaryText}>£29.97</Text>
     </View>
     <View style={styles.summaryRow}>
       <Text style={styles.summaryText}>Shipping</Text>
-      <Text style={styles.summaryText}>$5.00</Text>
+      <Text style={styles.summaryText}>£5.00</Text>
     </View>
     <View style={styles.summaryRow}>
       <Text style={styles.summaryTextBold}>Total</Text>
-      <Text style={styles.summaryTextBold}>$34.97</Text>
+      <Text style={styles.summaryTextBold}>£34.97</Text>
     </View>
   </View>
 );
