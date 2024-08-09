@@ -1,27 +1,67 @@
-import React, { useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+// HomeScreen.js
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useCart } from '../CartContext';
+import { useWindowDimensions } from 'react-native';
+import { products } from '../products';
+import CustomAlert from '../components/CustomAlert';
+
+
 
 export default function HomeScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Home');
-  const [cartItems, setCartItems] = useState([]);
+  // const [cartItems, setCartItems] = useState([]);
+  const { cartItems, addToCart } = useCart();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState(products);
+  const { width } = useWindowDimensions();
+  const numColumns = Math.floor(width / 180);
+  const [alertVisible, setAlertVisible] = useState(false);
 
-  useFocusEffect(
-    React.useCallback(() => {
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
       setActiveTab('Home');
-    }, [])
-  );
+      // Check if there's a showOrderAlert param in the navigation state
+      const showOrderAlert = navigation.getState().routes.find(
+        route => route.name === 'Home'
+      )?.params?.showOrderAlert;
+      
+      if (showOrderAlert) {
+        setAlertVisible(true);
+        // Clear the parameter
+        navigation.setParams({ showOrderAlert: undefined });
+      }
+    });
+
+    // Cleanup the listener on component unmount
+    return unsubscribe;
+  }, [navigation]);
+
+  const handleCloseAlert = () => {
+    setAlertVisible(false);
+  };
+
+  const handleSearch = (text) => {
+    setSearchQuery(text);
+    const filtered = products.filter(product =>
+      product.name.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredProducts(filtered);
+  };
 
   const renderProductItem = ({ item }) => (
     <TouchableOpacity style={styles.productItem}>
-      {/* <View style={[styles.productColor, { backgroundColor: item.color }]} />  */}
       <Image source={item.image} style={styles.productImage} />
       <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productPrice}>£{item.price}</Text>
+      <Text style={styles.productPrice}>£{item.price.toFixed(2)}</Text>
       <TouchableOpacity 
         style={styles.addToCartButton}
-        onPress={() => navigation.navigate('Cart')}
+        onPress={() => {
+          addToCart(item);
+          // Optionally, you can show a confirmation message or navigate to the cart
+          // navigation.navigate('Cart');
+        }}
       >
         <Text style={styles.addToCartText}>Add to Cart</Text>
       </TouchableOpacity>
@@ -37,7 +77,7 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="cart-outline" size={24} color="#FFFFFF" />
             {cartItems.length > 0 && (
               <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
+                <Text style={styles.cartBadgeText}>{cartItems.reduce((sum, item) => sum + item.quantity, 0)}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -59,17 +99,20 @@ export default function HomeScreen({ navigation }) {
             style={styles.searchInput} 
             placeholder="Search products" 
             placeholderTextColor="#999999"
+            value={searchQuery}
+            onChangeText={handleSearch}
           />
         </View>
       </View>
 
       {/* Main Content */}
       <FlatList
-        data={products}
+        data={filteredProducts}
         renderItem={renderProductItem}
         keyExtractor={item => item.id}
-        numColumns={2}
+        numColumns={numColumns}
         contentContainerStyle={styles.productList}
+        key={numColumns} // This forces the list to re-render when the number of columns changes
       />
 
       {/* Bottom Navigation */}
@@ -94,6 +137,12 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         ))}
       </View>
+      <CustomAlert
+        visible={alertVisible}
+        title="Order Placed"
+        message="Your order has been placed successfully!"
+        onClose={handleCloseAlert}
+      />
     </View>
   );
 }
@@ -108,15 +157,6 @@ const getIconName = (tab, isActive) => {
     default: return 'home-outline';
   }
 };
-  
-const products = [
-  { id: '1', name: 'MEXICAN FURY', color: '#3AAA35', price: 9.99, image: require('../assets/product-placeholder.png') },
-  { id: '2', name: 'FIERY GAZPACHO', color: '#E8442F', price: 9.99, image: require('../assets/product-placeholder.png') },
-  { id: '3', name: 'HEAVENLY HARISSA', color: '#942D88', price: 9.99, image: require('../assets/product-placeholder.png') },
-  { id: '4', name: 'JAMAICAN JERK', color: '#FCC018', price: 9.99, image: require('../assets/product-placeholder.png') },
-  { id: '5', name: 'REGAL RED PEPPER', color: '#E40421', price: 9.99, image: require('../assets/product-placeholder.png') },
-  { id: '6', name: 'TOTALLY THAI', color: '#E71C64', price: 9.99, image: require('../assets/product-placeholder.png') },
-];
 
 const styles = StyleSheet.create({
   container: {
