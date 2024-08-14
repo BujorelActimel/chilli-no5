@@ -51,5 +51,9 @@ export default function App() {
 }
 
 /*
-TODO: -
+TODO: 
+      - `don't know what you're looking for?` feature
+      - settings
+      - orders
+      - profile edit
 */

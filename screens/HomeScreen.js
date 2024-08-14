@@ -272,6 +272,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     backgroundColor: '#121212',
     paddingVertical: 10,
+    // paddingBottom: add for ios
     borderTopWidth: 1,
     borderTopColor: '#2A2A2A',
   },
