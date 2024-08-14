@@ -1,12 +1,13 @@
 // HomeScreen.js
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, FlatList } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../CartContext';
 import { useWindowDimensions } from 'react-native';
 import { products } from '../products';
 import CustomAlert from '../components/CustomAlert';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 
 export default function HomeScreen({ navigation }) {
@@ -55,6 +56,29 @@ export default function HomeScreen({ navigation }) {
       <Image source={item.image} style={styles.productImage} />
       <Text style={styles.productName}>{item.name}</Text>
       <Text style={styles.productPrice}>£{item.price.toFixed(2)}</Text>
+
+      {/* Spiciness Level */}
+      <View style={styles.spicyLevelContainer}>
+        {[...Array(5)].map((_, index) => (
+          // <Ionicons 
+          //   key={index}
+          //   name={index < item.spicyLevel ? "flame" : "flame-outline"} 
+          //   size={16} 
+          //   color={index < item.spicyLevel ? "#E40421" : "#999999"} 
+          // />
+          <FontAwesome6 
+            key={index}
+            name="pepper-hot" 
+            size={16}
+            color={index < item.spicyLevel ? "#E40421" : "#999999"}
+          />
+        ))}
+      </View>
+
+      {/* Food Pairings */}
+      <Text style={styles.pairingsLabel}>Pairs well with:</Text>
+      <Text style={styles.pairings}>{item.pairings.join(', ')}</Text>
+
       <TouchableOpacity 
         style={styles.addToCartButton}
         onPress={() => {
@@ -69,81 +93,83 @@ export default function HomeScreen({ navigation }) {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity onPress={() => navigation.navigate('Cart')} style={styles.iconContainer}>
-            <Ionicons name="cart-outline" size={24} color="#FFFFFF" />
-            {cartItems.length > 0 && (
-              <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{cartItems.reduce((sum, item) => sum + item.quantity, 0)}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-          <Image
-            source={require('../assets/extended-white-logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.iconContainer}>
+    <SafeAreaView style={styles.safeArea} edges={['bottom', 'left', 'right']}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={() => navigation.navigate('Cart')} style={styles.iconContainer}>
+              <Ionicons name="cart-outline" size={24} color="#FFFFFF" />
+              {cartItems.length > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text style={styles.cartBadgeText}>{cartItems.reduce((sum, item) => sum + item.quantity, 0)}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
             <Image
-              source={require('../assets/profile-placeholder.png')}
-              style={styles.profileIcon}
+              source={require('../assets/extended-white-logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
             />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#FFFFFF" />
-          <TextInput 
-            style={styles.searchInput} 
-            placeholder="Search products" 
-            placeholderTextColor="#999999"
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-      </View>
-
-      {/* Main Content */}
-      <FlatList
-        data={filteredProducts}
-        renderItem={renderProductItem}
-        keyExtractor={item => item.id}
-        numColumns={numColumns}
-        contentContainerStyle={styles.productList}
-        key={numColumns} // This forces the list to re-render when the number of columns changes
-      />
-
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        {['Home', 'Shop', 'Cart', 'Profile'].map((tab) => (
-          <TouchableOpacity 
-            key={tab} 
-            style={styles.navItem}
-            onPress={() => {
-              setActiveTab(tab);
-              if (tab === 'Cart') navigation.navigate('Cart');
-              else if (tab === 'Profile') navigation.navigate('Profile');
-              else if (tab === 'Home') navigation.navigate('Home');
-            }}
-          >
-            <Ionicons 
-              name={getIconName(tab)} 
-              size={24} 
-              color={activeTab === tab ? '#FFFFFF' : '#999999'} 
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.iconContainer}>
+              <Image
+                source={require('../assets/profile-placeholder.png')}
+                style={styles.profileIcon}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color="#FFFFFF" />
+            <TextInput 
+              style={styles.searchInput} 
+              placeholder="Search products" 
+              placeholderTextColor="#999999"
+              value={searchQuery}
+              onChangeText={handleSearch}
             />
-            <Text style={[styles.navText, activeTab === tab && styles.activeNavText]}>{tab}</Text>
-          </TouchableOpacity>
-        ))}
+          </View>
+        </View>
+
+        {/* Main Content */}
+        <FlatList
+          data={filteredProducts}
+          renderItem={renderProductItem}
+          keyExtractor={item => item.id}
+          numColumns={numColumns}
+          contentContainerStyle={styles.productList}
+          key={numColumns} // This forces the list to re-render when the number of columns changes
+        />
+
+        {/* Bottom Navigation */}
+        <View style={styles.bottomNav}>
+          {['Home', 'Shop', 'Cart', 'Profile'].map((tab) => (
+            <TouchableOpacity 
+              key={tab} 
+              style={styles.navItem}
+              onPress={() => {
+                setActiveTab(tab);
+                if (tab === 'Cart') navigation.navigate('Cart');
+                else if (tab === 'Profile') navigation.navigate('Profile');
+                else if (tab === 'Home') navigation.navigate('Home');
+              }}
+            >
+              <Ionicons 
+                name={getIconName(tab)} 
+                size={24} 
+                color={activeTab === tab ? '#FFFFFF' : '#999999'} 
+              />
+              <Text style={[styles.navText, activeTab === tab && styles.activeNavText]}>{tab}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <CustomAlert
+          visible={alertVisible}
+          title="Order Placed"
+          message="Your order has been placed successfully!"
+          onClose={handleCloseAlert}
+        />
       </View>
-      <CustomAlert
-        visible={alertVisible}
-        title="Order Placed"
-        message="Your order has been placed successfully!"
-        onClose={handleCloseAlert}
-      />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -159,6 +185,10 @@ const getIconName = (tab, isActive) => {
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
   container: {
     flex: 1,
     backgroundColor: '#000000',
@@ -227,8 +257,25 @@ const styles = StyleSheet.create({
     margin: 5,
     backgroundColor: '#1A1A1A',
     borderRadius: 10,
-    padding: 10,
+    padding: 15,
     alignItems: 'center',
+  },
+  spicyLevelContainer: {
+    flexDirection: 'row',
+    marginTop: 5,
+    marginBottom: 5,
+  },
+  pairingsLabel: {
+    fontFamily: 'GothamBold',
+    fontSize: 12,
+    color: '#FFFFFF',
+    marginTop: 5,
+  },
+  pairings: {
+    fontFamily: 'GothamBook',
+    fontSize: 12,
+    color: '#999999',
+    marginBottom: 10,
   },
   productColor: {
     width: 30,
@@ -275,6 +322,7 @@ const styles = StyleSheet.create({
     // paddingBottom: add for ios
     borderTopWidth: 1,
     borderTopColor: '#2A2A2A',
+    // paddingBottom: Platform.OS === 'ios' ? 20 : 10, // Add extra padding for iOS
   },
   navItem: {
     alignItems: 'center',
