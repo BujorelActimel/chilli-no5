@@ -1,6 +1,7 @@
 // HomeScreen.js
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../CartContext';
 import { useWindowDimensions } from 'react-native';
@@ -8,6 +9,8 @@ import { products } from '../products';
 import CustomAlert from '../components/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import Header from '../components/Header';
+import BottomNavBar from '../components/BottomNavBar';
 
 
 export default function HomeScreen({ navigation }) {
@@ -19,6 +22,20 @@ export default function HomeScreen({ navigation }) {
   const { width } = useWindowDimensions();
   const numColumns = Math.floor(width / 180);
   const [alertVisible, setAlertVisible] = useState(false);
+  // const [hasRecommendations, setHasRecommendations] = useState(false);
+
+  // useEffect(() => {
+  //   checkRecommendations();
+  // }, []);
+
+  // const checkRecommendations = async () => {
+  //   try {
+  //     const recommendations = await AsyncStorage.getItem('recommendations');
+  //     setHasRecommendations(recommendations !== null);
+  //   } catch (error) {
+  //     console.error('Error checking recommendations:', error);
+  //   }
+  // };
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -93,82 +110,45 @@ export default function HomeScreen({ navigation }) {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom', 'left', 'right']}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={() => navigation.navigate('Cart')} style={styles.iconContainer}>
-              <Ionicons name="cart-outline" size={24} color="#FFFFFF" />
-              {cartItems.length > 0 && (
-                <View style={styles.cartBadge}>
-                  <Text style={styles.cartBadgeText}>{cartItems.reduce((sum, item) => sum + item.quantity, 0)}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <Image
-              source={require('../assets/extended-white-logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.iconContainer}>
-              <Image
-                source={require('../assets/profile-placeholder.png')}
-                style={styles.profileIcon}
-              />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="#FFFFFF" />
-            <TextInput 
-              style={styles.searchInput} 
-              placeholder="Search products" 
-              placeholderTextColor="#999999"
-              value={searchQuery}
-              onChangeText={handleSearch}
-            />
-          </View>
+    <SafeAreaView style={styles.container}>
+      <Header navigation={navigation} />
+      <View style={styles.searchBarContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color="#FFFFFF" />
+          <TextInput 
+            style={styles.searchInput} 
+            placeholder="Search products" 
+            placeholderTextColor="#999999"
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
         </View>
-
-        {/* Main Content */}
-        <FlatList
-          data={filteredProducts}
-          renderItem={renderProductItem}
-          keyExtractor={item => item.id}
-          numColumns={numColumns}
-          contentContainerStyle={styles.productList}
-          key={numColumns} // This forces the list to re-render when the number of columns changes
-        />
-
-        {/* Bottom Navigation */}
-        <View style={styles.bottomNav}>
-          {['Home', 'Shop', 'Cart', 'Profile'].map((tab) => (
-            <TouchableOpacity 
-              key={tab} 
-              style={styles.navItem}
-              onPress={() => {
-                setActiveTab(tab);
-                if (tab === 'Cart') navigation.navigate('Cart');
-                else if (tab === 'Profile') navigation.navigate('Profile');
-                else if (tab === 'Home') navigation.navigate('Home');
-              }}
-            >
-              <Ionicons 
-                name={getIconName(tab)} 
-                size={24} 
-                color={activeTab === tab ? '#FFFFFF' : '#999999'} 
-              />
-              <Text style={[styles.navText, activeTab === tab && styles.activeNavText]}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <CustomAlert
-          visible={alertVisible}
-          title="Order Placed"
-          message="Your order has been placed successfully!"
-          onClose={handleCloseAlert}
-        />
       </View>
+      {/* {!hasRecommendations && (
+        <TouchableOpacity 
+          style={styles.recommendationButton}
+          onPress={() => navigation.navigate('Recommendation')}
+        >
+          <Text style={styles.recommendationButtonText}>Don't know what you're looking for?</Text>
+          <Text style={styles.recommendationButtonSubtext}>Let us help you find the perfect sauce!</Text>
+        </TouchableOpacity>
+      )} */}
+      <TouchableOpacity 
+        style={styles.recommendationButton}
+        onPress={() => navigation.navigate('Recommendation')}
+      >
+        <Text style={styles.recommendationButtonText}>Don't know what you're looking for?</Text>
+        <Text style={styles.recommendationButtonSubtext}>Let us help you find the perfect sauce!</Text>
+      </TouchableOpacity>
+      <FlatList
+        data={filteredProducts}
+        renderItem={renderProductItem}
+        keyExtractor={item => item.id}
+        numColumns={numColumns}
+        contentContainerStyle={styles.productList}
+        key={numColumns}
+      />
+      <BottomNavBar navigation={navigation} activeTab="Home" />
     </SafeAreaView>
   );
 }
@@ -193,11 +173,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  header: {
-    padding: 20,
-    paddingTop: 50,
+  searchBarContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     backgroundColor: '#121212',
   },
+  // header: {
+  //   padding: 20,
+  //   paddingTop: 50,
+  //   backgroundColor: '#121212',
+  // },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -335,5 +320,23 @@ const styles = StyleSheet.create({
   },
   activeNavText: {
     color: '#FFFFFF',
+  },
+  recommendationButton: {
+    backgroundColor: '#1A1A1A',
+    padding: 15,
+    margin: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  recommendationButtonText: {
+    fontFamily: 'GothamBold',
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  recommendationButtonSubtext: {
+    fontFamily: 'GothamBook',
+    fontSize: 14,
+    color: '#999999',
+    marginTop: 5,
   },
 });
