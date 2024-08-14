@@ -15,27 +15,12 @@ import BottomNavBar from '../components/BottomNavBar';
 
 export default function HomeScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Home');
-  // const [cartItems, setCartItems] = useState([]);
-  const { cartItems, addToCart } = useCart();
+  const { addToCart } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProducts, setFilteredProducts] = useState(products);
   const { width } = useWindowDimensions();
   const numColumns = Math.floor(width / 180);
   const [alertVisible, setAlertVisible] = useState(false);
-  // const [hasRecommendations, setHasRecommendations] = useState(false);
-
-  // useEffect(() => {
-  //   checkRecommendations();
-  // }, []);
-
-  // const checkRecommendations = async () => {
-  //   try {
-  //     const recommendations = await AsyncStorage.getItem('recommendations');
-  //     setHasRecommendations(recommendations !== null);
-  //   } catch (error) {
-  //     console.error('Error checking recommendations:', error);
-  //   }
-  // };
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -77,12 +62,6 @@ export default function HomeScreen({ navigation }) {
       {/* Spiciness Level */}
       <View style={styles.spicyLevelContainer}>
         {[...Array(5)].map((_, index) => (
-          // <Ionicons 
-          //   key={index}
-          //   name={index < item.spicyLevel ? "flame" : "flame-outline"} 
-          //   size={16} 
-          //   color={index < item.spicyLevel ? "#E40421" : "#999999"} 
-          // />
           <FontAwesome6 
             key={index}
             name="pepper-hot" 
@@ -100,8 +79,6 @@ export default function HomeScreen({ navigation }) {
         style={styles.addToCartButton}
         onPress={() => {
           addToCart(item);
-          // Optionally, you can show a confirmation message or navigate to the cart
-          // navigation.navigate('Cart');
         }}
       >
         <Text style={styles.addToCartText}>Add to Cart</Text>
@@ -124,20 +101,11 @@ export default function HomeScreen({ navigation }) {
           />
         </View>
       </View>
-      {/* {!hasRecommendations && (
-        <TouchableOpacity 
-          style={styles.recommendationButton}
-          onPress={() => navigation.navigate('Recommendation')}
-        >
-          <Text style={styles.recommendationButtonText}>Don't know what you're looking for?</Text>
-          <Text style={styles.recommendationButtonSubtext}>Let us help you find the perfect sauce!</Text>
-        </TouchableOpacity>
-      )} */}
       <TouchableOpacity 
         style={styles.recommendationButton}
         onPress={() => navigation.navigate('Recommendation')}
       >
-        <Text style={styles.recommendationButtonText}>Don't know what you're looking for?</Text>
+        <Text style={styles.recommendationButtonText}>Not sure what to buy?</Text>
         <Text style={styles.recommendationButtonSubtext}>Let us help you find the perfect sauce!</Text>
       </TouchableOpacity>
       <FlatList
@@ -149,20 +117,26 @@ export default function HomeScreen({ navigation }) {
         key={numColumns}
       />
       <BottomNavBar navigation={navigation} activeTab="Home" />
+      
+      <CustomAlert
+        visible={alertVisible}
+        title="Order Placed"
+        message="Your order has been successfully placed!"
+        onClose={handleCloseAlert}
+      />
     </SafeAreaView>
   );
 }
 
-// ... rest of your code (getIconName, products, styles) stays the same
-const getIconName = (tab, isActive) => {
-  switch (tab) {
-    case 'Home': return isActive ? 'home' : 'home-outline';
-    case 'Shop': return isActive ? 'grid' : 'grid-outline';
-    case 'Cart': return isActive ? 'cart' : 'cart-outline';
-    case 'Profile': return isActive ? 'person' : 'person-outline';
-    default: return 'home-outline';
-  }
-};
+// const getIconName = (tab, isActive) => {
+//   switch (tab) {
+//     case 'Home': return isActive ? 'home' : 'home-outline';
+//     case 'Shop': return isActive ? 'grid' : 'grid-outline';
+//     case 'Cart': return isActive ? 'cart' : 'cart-outline';
+//     case 'Profile': return isActive ? 'person' : 'person-outline';
+//     default: return 'home-outline';
+//   }
+// };
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -178,11 +152,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: '#121212',
   },
-  // header: {
-  //   padding: 20,
-  //   paddingTop: 50,
-  //   backgroundColor: '#121212',
-  // },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -306,7 +275,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: '#2A2A2A',
-    // paddingBottom: Platform.OS === 'ios' ? 20 : 10, // Add extra padding for iOS
   },
   navItem: {
     alignItems: 'center',

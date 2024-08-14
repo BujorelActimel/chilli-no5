@@ -87,11 +87,6 @@ export default function CartScreen({ navigation }) {
   );
 }
 
-// const cartItems = [
-//   { id: '1', name: 'MEXICAN FURY', color: '#3AAA35', price: 9.99, quantity: 1, image: require('../assets/product-placeholder.png') },
-//   { id: '2', name: 'FIERY GAZPACHO', color: '#E8442F', price: 9.99, quantity: 2, image: require('../assets/product-placeholder.png') },
-// ];
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

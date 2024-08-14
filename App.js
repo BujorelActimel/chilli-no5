@@ -4,7 +4,7 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import HomeScreen from './screens/HomeScreen';  // Move your main screen content here
+import HomeScreen from './screens/HomeScreen';
 import CartScreen from './screens/CartScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import CheckoutScreen from './screens/CheckoutScreen';
