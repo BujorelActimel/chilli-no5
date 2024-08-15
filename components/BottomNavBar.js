@@ -4,12 +4,12 @@ import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function BottomNavBar({ navigation, activeTab }) {
-  const tabs = ['Home', 'Recommendation', 'Cart', 'Profile'];
+  const tabs = ['Home', 'Wishlist', 'Cart', 'Profile'];
 
   const getIconName = (tab) => {
     switch (tab) {
       case 'Home': return activeTab === 'Home' ? 'home' : 'home-outline';
-      case 'Recommendation': return activeTab === 'Recommendation' ? 'list' : 'list-outline';
+      case 'Wishlist': return activeTab === 'Wishlist' ? 'heart' : 'heart-outline';
       case 'Cart': return activeTab === 'Cart' ? 'cart' : 'cart-outline';
       case 'Profile': return activeTab === 'Profile' ? 'person' : 'person-outline';
       default: return 'home-outline';
@@ -17,11 +17,11 @@ export default function BottomNavBar({ navigation, activeTab }) {
   };
 
   const handleNavigation = (tab) => {
-    if (tab === 'Recommendation') {
-      navigation.navigate('Recommendation');
-    } else {
+    // if (tab === 'Recommendation') {
+    //   navigation.navigate('Recommendation');
+    // } else {
       navigation.navigate(tab);
-    }
+    // }
   };
 
   return (

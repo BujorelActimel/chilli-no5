@@ -1,14 +1,10 @@
-// RecommendationResultsScreen.js
 import React from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, FlatList } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useCart } from '../CartContext';
 import { useWindowDimensions } from 'react-native';
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import Header from '../components/Header';
-import BottomNavBar from '../components/BottomNavBar';
 
 export default function RecommendationResultsScreen({ navigation, route }) {
   const { recommendations } = route.params;
@@ -16,14 +12,12 @@ export default function RecommendationResultsScreen({ navigation, route }) {
   const { width } = useWindowDimensions();
   const numColumns = Math.floor(width / 180);
 
-
   const renderProductItem = ({ item }) => (
     <TouchableOpacity style={styles.productItem}>
       <Image source={item.image} style={styles.productImage} />
       <Text style={styles.productName}>{item.name}</Text>
       <Text style={styles.productPrice}>£{item.price.toFixed(2)}</Text>
 
-      {/* Spiciness Level */}
       <View style={styles.spicyLevelContainer}>
         {[...Array(5)].map((_, index) => (
           <FontAwesome6 
@@ -35,15 +29,12 @@ export default function RecommendationResultsScreen({ navigation, route }) {
         ))}
       </View>
 
-      {/* Food Pairings */}
       <Text style={styles.pairingsLabel}>Pairs well with:</Text>
       <Text style={styles.pairings}>{item.pairings.join(', ')}</Text>
 
       <TouchableOpacity 
         style={styles.addToCartButton}
-        onPress={() => {
-          addToCart(item);
-        }}
+        onPress={() => addToCart(item)}
       >
         <Text style={styles.addToCartText}>Add to Cart</Text>
       </TouchableOpacity>
@@ -52,8 +43,26 @@ export default function RecommendationResultsScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header navigation={navigation} />
-      <Text style={styles.recommendationTitle}>Recommended for You</Text>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Recommendations</Text>
+        <TouchableOpacity 
+          style={styles.cartButton}
+          onPress={() => navigation.navigate('Cart')}
+        >
+          <Ionicons name="cart-outline" size={24} color="#FFFFFF" />
+          {cartItems.length > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={recommendations}
         renderItem={renderProductItem}
@@ -62,7 +71,6 @@ export default function RecommendationResultsScreen({ navigation, route }) {
         contentContainerStyle={styles.productList}
         key={numColumns}
       />
-      <BottomNavBar navigation={navigation} activeTab="Recommendation" />
     </SafeAreaView>
   );
 }
@@ -72,26 +80,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  headerContent: {
+  header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333',
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+  backButton: {
+    padding: 8,
   },
-  logo: {
-    width: 150,
-    height: 30,
+  headerTitle: {
+    fontFamily: 'AbhayaLibreBold',
+    fontSize: 20,
+    color: '#FFFFFF',
   },
-  profileIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+  cartButton: {
+    padding: 8,
   },
   cartBadge: {
     position: 'absolute',
@@ -109,12 +116,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: 'GothamBold',
   },
-  recommendationTitle: {
-    fontFamily: 'AbhayaLibreBold',
-    fontSize: 24,
-    color: '#FFFFFF',
-    marginTop: 10,
-  },
   productList: {
     padding: 10,
   },
@@ -124,11 +125,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A1A1A',
     borderRadius: 10,
     padding: 15,
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 350, // Set a fixed height for all items
+  },
+  productInfo: {
+    flex: 1,
   },
   productImage: {
     width: 120,
     height: 120,
+    alignSelf: 'center',
     marginBottom: 10,
   },
   productName: {
@@ -142,10 +148,12 @@ const styles = StyleSheet.create({
     fontFamily: 'GothamBook',
     fontSize: 14,
     color: '#FFFFFF',
+    textAlign: 'center',
     marginBottom: 10,
   },
   spicyLevelContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: 5,
     marginBottom: 5,
   },
@@ -154,6 +162,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FFFFFF',
     marginTop: 5,
+    textAlign: 'center',
   },
   pairings: {
     fontFamily: 'GothamBook',
@@ -167,16 +176,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
+    alignSelf: 'center',
+    marginTop: 10,
   },
   addToCartText: {
     fontFamily: 'GothamBold',
     fontSize: 12,
     color: '#FFFFFF',
-  },
-  recommendationTitle: {
-    fontFamily: 'AbhayaLibreBold',
-    fontSize: 24,
-    color: '#FFFFFF',
-    margin: 20,
   },
 });

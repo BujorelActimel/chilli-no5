@@ -9,7 +9,7 @@ import CartScreen from './screens/CartScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import CheckoutScreen from './screens/CheckoutScreen';
 import { CartProvider } from './CartContext';
-import RecommendationScreen from './screens/RecommendationScreen';
+import WishlistScreen from './screens/WishlistScreen';
 import RecommendationResultsScreen from './screens/RecommendationResultsScreen';
 
 const Stack = createStackNavigator();
@@ -47,7 +47,8 @@ export default function App() {
           <Stack.Screen name="Cart" component={CartScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="Checkout" component={CheckoutScreen} />
-          <Stack.Screen name="Recommendation" component={RecommendationScreen} />
+          {/* <Stack.Screen name="Recommendation" component={RecommendationScreen} /> */}
+          <Stack.Screen name="Wishlist" component={WishlistScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </CartProvider>
@@ -55,5 +56,6 @@ export default function App() {
 }
 
 /*
-TODO: -
+TODO: - Make the recommandation appear on the home screen
+      - Make the recommenadtion screen, the wishlist screen
 */

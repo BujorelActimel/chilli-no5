@@ -1,7 +1,5 @@
-// HomeScreen.js
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../CartContext';
 import { useWindowDimensions } from 'react-native';
@@ -11,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Header from '../components/Header';
 import BottomNavBar from '../components/BottomNavBar';
-
+import RecommendationPopup from '../components/RecommendationPopup';
 
 export default function HomeScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Home');
@@ -21,23 +19,22 @@ export default function HomeScreen({ navigation }) {
   const { width } = useWindowDimensions();
   const numColumns = Math.floor(width / 180);
   const [alertVisible, setAlertVisible] = useState(false);
+  const [showRecommendation, setShowRecommendation] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       setActiveTab('Home');
-      // Check if there's a showOrderAlert param in the navigation state
       const showOrderAlert = navigation.getState().routes.find(
         route => route.name === 'Home'
       )?.params?.showOrderAlert;
       
       if (showOrderAlert) {
         setAlertVisible(true);
-        // Clear the parameter
         navigation.setParams({ showOrderAlert: undefined });
       }
     });
 
-    // Cleanup the listener on component unmount
     return unsubscribe;
   }, [navigation]);
 
@@ -56,35 +53,38 @@ export default function HomeScreen({ navigation }) {
   const renderProductItem = ({ item }) => (
     <TouchableOpacity style={styles.productItem}>
       <Image source={item.image} style={styles.productImage} />
-      <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productPrice}>£{item.price.toFixed(2)}</Text>
-
-      {/* Spiciness Level */}
-      <View style={styles.spicyLevelContainer}>
-        {[...Array(5)].map((_, index) => (
-          <FontAwesome6 
-            key={index}
-            name="pepper-hot" 
-            size={16}
-            color={index < item.spicyLevel ? "#E40421" : "#999999"}
-          />
-        ))}
+      <View style={styles.productInfo}>
+        <Text style={styles.productName}>{item.name}</Text>
+        <Text style={styles.productPrice}>£{item.price.toFixed(2)}</Text>
+  
+        <View style={styles.spicyLevelContainer}>
+          {[...Array(5)].map((_, index) => (
+            <FontAwesome6 
+              key={index}
+              name="pepper-hot" 
+              size={16}
+              color={index < item.spicyLevel ? "#E40421" : "#999999"}
+            />
+          ))}
+        </View>
+  
+        <Text style={styles.pairingsLabel}>Pairs well with:</Text>
+        <Text style={styles.pairings}>{item.pairings.join(', ')}</Text>
       </View>
-
-      {/* Food Pairings */}
-      <Text style={styles.pairingsLabel}>Pairs well with:</Text>
-      <Text style={styles.pairings}>{item.pairings.join(', ')}</Text>
-
+  
       <TouchableOpacity 
         style={styles.addToCartButton}
-        onPress={() => {
-          addToCart(item);
-        }}
+        onPress={() => addToCart(item)}
       >
         <Text style={styles.addToCartText}>Add to Cart</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
+
+  const handleRecommendationComplete = (recommendedProducts) => {
+    setRecommendations(recommendedProducts);
+    setShowRecommendation(false);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -101,13 +101,6 @@ export default function HomeScreen({ navigation }) {
           />
         </View>
       </View>
-      <TouchableOpacity 
-        style={styles.recommendationButton}
-        onPress={() => navigation.navigate('Recommendation')}
-      >
-        <Text style={styles.recommendationButtonText}>Not sure what to buy?</Text>
-        <Text style={styles.recommendationButtonSubtext}>Let us help you find the perfect sauce!</Text>
-      </TouchableOpacity>
       <FlatList
         data={filteredProducts}
         renderItem={renderProductItem}
@@ -116,6 +109,15 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={styles.productList}
         key={numColumns}
       />
+
+      <TouchableOpacity 
+        style={styles.floatingButton}
+        onPress={() => setShowRecommendation(true)}
+      >
+        {/* <Ionicons name="help-circle-outline" size={30} color="#FFFFFF" /> */}
+        <Text style={styles.helpButtonText}>Need Help?</Text>
+      </TouchableOpacity>
+
       <BottomNavBar navigation={navigation} activeTab="Home" />
       
       <CustomAlert
@@ -124,19 +126,15 @@ export default function HomeScreen({ navigation }) {
         message="Your order has been successfully placed!"
         onClose={handleCloseAlert}
       />
+
+      <RecommendationPopup
+        visible={showRecommendation}
+        onClose={() => setShowRecommendation(false)}
+        navigation={navigation}
+      />
     </SafeAreaView>
   );
 }
-
-// const getIconName = (tab, isActive) => {
-//   switch (tab) {
-//     case 'Home': return isActive ? 'home' : 'home-outline';
-//     case 'Shop': return isActive ? 'grid' : 'grid-outline';
-//     case 'Cart': return isActive ? 'cart' : 'cart-outline';
-//     case 'Profile': return isActive ? 'person' : 'person-outline';
-//     default: return 'home-outline';
-//   }
-// };
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -212,10 +210,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A1A1A',
     borderRadius: 10,
     padding: 15,
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 350, // Set a fixed height for all items
+  },
+  productInfo: {
+    flex: 1,
   },
   spicyLevelContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: 5,
     marginBottom: 5,
   },
@@ -224,12 +227,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FFFFFF',
     marginTop: 5,
+    textAlign: 'center',
   },
   pairings: {
     fontFamily: 'GothamBook',
     fontSize: 12,
     color: '#999999',
     marginBottom: 10,
+    textAlign: 'center',
   },
   productColor: {
     width: 30,
@@ -242,6 +247,7 @@ const styles = StyleSheet.create({
   productImage: {
     width: 120,
     height: 120,
+    alignSelf: 'center',
     marginBottom: 10,
   },
   productName: {
@@ -255,6 +261,7 @@ const styles = StyleSheet.create({
     fontFamily: 'GothamBook',
     fontSize: 14,
     color: '#FFFFFF',
+    textAlign: 'center',
     marginBottom: 10,
   },
   addToCartButton: {
@@ -262,6 +269,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
+    alignSelf: 'center',
+    marginTop: 10,
   },
   addToCartText: {
     fontFamily: 'GothamBold',
@@ -305,5 +314,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999999',
     marginTop: 5,
+  },
+  floatingButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 80,
+    backgroundColor: '#E40421',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  helpButtonText: {
+    color: '#FFFFFF',
+    marginLeft: 5,
+    fontFamily: 'GothamBook',
+    fontSize: 12,
   },
 });
