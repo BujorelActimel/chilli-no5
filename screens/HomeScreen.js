@@ -101,6 +101,20 @@ export default function HomeScreen({ navigation }) {
           />
         </View>
       </View>
+      
+      <TouchableOpacity 
+        style={styles.recommendationButton}
+        onPress={() => setShowRecommendation(true)}
+      >
+        <View style={styles.recommendationContent}>
+          <Ionicons name="help-circle-outline" size={24} color="#FFFFFF" style={styles.recommendationIcon} />
+          <View style={styles.recommendationText}>
+            <Text style={styles.recommendationButtonTitle}>Not sure what to buy?</Text>
+            <Text style={styles.recommendationButtonSubtitle}>Find the perfect sauce!</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+
       <FlatList
         data={filteredProducts}
         renderItem={renderProductItem}
@@ -109,14 +123,6 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={styles.productList}
         key={numColumns}
       />
-
-      <TouchableOpacity 
-        style={styles.floatingButton}
-        onPress={() => setShowRecommendation(true)}
-      >
-        {/* <Ionicons name="help-circle-outline" size={30} color="#FFFFFF" /> */}
-        <Text style={styles.helpButtonText}>Need Help?</Text>
-      </TouchableOpacity>
 
       <BottomNavBar navigation={navigation} activeTab="Home" />
       
@@ -299,42 +305,30 @@ const styles = StyleSheet.create({
   },
   recommendationButton: {
     backgroundColor: '#1A1A1A',
-    padding: 15,
-    margin: 20,
     borderRadius: 10,
+    padding: 10,
+    marginHorizontal: 10,
+    marginVertical: 5,
+    marginTop: 10,
+  },
+  recommendationContent: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  recommendationButtonText: {
+  recommendationIcon: {
+    marginRight: 10,
+  },
+  recommendationText: {
+    flex: 1,
+  },
+  recommendationButtonTitle: {
     fontFamily: 'GothamBold',
     fontSize: 16,
     color: '#FFFFFF',
   },
-  recommendationButtonSubtext: {
-    fontFamily: 'GothamBook',
-    fontSize: 14,
-    color: '#999999',
-    marginTop: 5,
-  },
-  floatingButton: {
-    position: 'absolute',
-    right: 20,
-    bottom: 80,
-    backgroundColor: '#E40421',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  helpButtonText: {
-    color: '#FFFFFF',
-    marginLeft: 5,
+  recommendationButtonSubtitle: {
     fontFamily: 'GothamBook',
     fontSize: 12,
+    color: '#999999',
   },
 });
