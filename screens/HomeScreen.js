@@ -3,24 +3,56 @@ import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, FlatList, P
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../CartContext';
 import { useWindowDimensions } from 'react-native';
-import { products } from '../products';
 import CustomAlert from '../components/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Header from '../components/Header';
 import BottomNavBar from '../components/BottomNavBar';
 import RecommendationPopup from '../components/RecommendationPopup';
+import { XMLParser } from 'fast-xml-parser';
 
 export default function HomeScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Home');
   const { addToCart } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [products, setProducts] = useState([]); // State to hold the fetched products
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const { width } = useWindowDimensions();
   const numColumns = Math.floor(width / 180);
   const [alertVisible, setAlertVisible] = useState(false);
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+          const response = await fetch('https://chilli-no5.com/wp-content/uploads/woo-feed/google/xml/feed-uk-3.xml');
+          const xmlString = await response.text();
+  
+          // Parse the XML string into a JavaScript object
+          const parser = new XMLParser();
+          const parsedXML = parser.parse(xmlString);
+  
+          // Map the parsed XML to your product structure
+          const fetchedProducts = parsedXML.rss.channel.item.map(item => ({
+              id: item['g:id'],
+              name: item['g:title'],
+              price: parseFloat(item['g:price'].replace(' USD', '')),
+              image: { uri: item['g:image_link'] },
+              pairings: [], // You can set a default or fetch pairings differently
+              spicyLevel: 0, // If spicyLevel is not in XML, set a default or fetch differently
+          }));
+  
+          setProducts(fetchedProducts);
+          setFilteredProducts(fetchedProducts); // Initially set the filtered products to the fetched ones
+      } catch (error) {
+          console.error("Error fetching and parsing XML", error);
+          setProducts([]); // Set an empty array in case of an error
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {

@@ -56,6 +56,5 @@ export default function App() {
 }
 
 /*
-TODO: - Make the recommandation appear on the home screen
-      - Make the recommenadtion screen, the wishlist screen
+TODO:
 */
