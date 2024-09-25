@@ -1,10 +1,9 @@
 // CheckoutScreen.js
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../CartContext';
-// import CustomAlert from '../components/CustomAlert';
 
 const PaymentMethodOption = ({ label, selected, onSelect }) => (
     <TouchableOpacity style={styles.paymentOption} onPress={onSelect}>
@@ -16,15 +15,10 @@ const PaymentMethodOption = ({ label, selected, onSelect }) => (
 );
 
 export default function CheckoutScreen({ navigation }) {
-//   const cartContext = useCart();
-//   useEffect(() => {
-//     console.log('Cart Context:', cartContext);
-//   }, []);
 
   const { cartItems, clearCart } = useCart();
   const [shippingAddress, setShippingAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
-//   const [alertVisible, setAlertVisible] = useState(false);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = 5.00;
@@ -33,23 +27,8 @@ export default function CheckoutScreen({ navigation }) {
   const paymentMethods = ['Credit Card', 'PayPal', 'Apple Pay', 'Google Pay'];
 
   const handleCheckout = () => {
-    // Implement your checkout logic here
-    // For example, send order to server, clear cart, etc.
     clearCart();
     navigation.navigate('Home', { showOrderAlert: true });
-  };
-//   const handleCheckout = () => {
-//     if (cartContext.clearCart) {
-//         cartContext.clearCart();
-//         setAlertVisible(true);
-//     } else {
-//         console.error('clearCart function is not available in the cart context');
-//     }
-//   };
-
-  const handleCloseAlert = () => {
-    setAlertVisible(false);
-    // navigation.navigate('Home');
   };
 
   return (

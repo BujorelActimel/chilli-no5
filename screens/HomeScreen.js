@@ -1,58 +1,72 @@
-// HomeScreen.js
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../CartContext';
 import { useWindowDimensions } from 'react-native';
-import { products } from '../products';
 import CustomAlert from '../components/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Header from '../components/Header';
 import BottomNavBar from '../components/BottomNavBar';
-
+import RecommendationPopup from '../components/RecommendationPopup';
+import { XMLParser } from 'fast-xml-parser';
 
 export default function HomeScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Home');
-  // const [cartItems, setCartItems] = useState([]);
-  const { cartItems, addToCart } = useCart();
+  const { addToCart } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [products, setProducts] = useState([]); // State to hold the fetched products
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const { width } = useWindowDimensions();
   const numColumns = Math.floor(width / 180);
   const [alertVisible, setAlertVisible] = useState(false);
-  // const [hasRecommendations, setHasRecommendations] = useState(false);
+  const [showRecommendation, setShowRecommendation] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
 
-  // useEffect(() => {
-  //   checkRecommendations();
-  // }, []);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+          const response = await fetch('https://chilli-no5.com/wp-content/uploads/woo-feed/google/xml/feed-uk-3.xml');
+          const xmlString = await response.text();
+  
+          // Parse the XML string into a JavaScript object
+          const parser = new XMLParser();
+          const parsedXML = parser.parse(xmlString);
+  
+          // Map the parsed XML to your product structure
+          const fetchedProducts = parsedXML.rss.channel.item.map(item => ({
+              id: item['g:id'],
+              name: item['g:title'],
+              price: parseFloat(item['g:price'].replace(' USD', '')),
+              image: { uri: item['g:image_link'] },
+              pairings: [], // You can set a default or fetch pairings differently
+              spicyLevel: 0, // If spicyLevel is not in XML, set a default or fetch differently
+          }));
+  
+          setProducts(fetchedProducts);
+          setFilteredProducts(fetchedProducts); // Initially set the filtered products to the fetched ones
+      } catch (error) {
+          console.error("Error fetching and parsing XML", error);
+          setProducts([]); // Set an empty array in case of an error
+      }
+    };
 
-  // const checkRecommendations = async () => {
-  //   try {
-  //     const recommendations = await AsyncStorage.getItem('recommendations');
-  //     setHasRecommendations(recommendations !== null);
-  //   } catch (error) {
-  //     console.error('Error checking recommendations:', error);
-  //   }
-  // };
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       setActiveTab('Home');
-      // Check if there's a showOrderAlert param in the navigation state
       const showOrderAlert = navigation.getState().routes.find(
         route => route.name === 'Home'
       )?.params?.showOrderAlert;
       
       if (showOrderAlert) {
         setAlertVisible(true);
-        // Clear the parameter
         navigation.setParams({ showOrderAlert: undefined });
       }
     });
 
-    // Cleanup the listener on component unmount
     return unsubscribe;
   }, [navigation]);
 
@@ -71,43 +85,38 @@ export default function HomeScreen({ navigation }) {
   const renderProductItem = ({ item }) => (
     <TouchableOpacity style={styles.productItem}>
       <Image source={item.image} style={styles.productImage} />
-      <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productPrice}>£{item.price.toFixed(2)}</Text>
-
-      {/* Spiciness Level */}
-      <View style={styles.spicyLevelContainer}>
-        {[...Array(5)].map((_, index) => (
-          // <Ionicons 
-          //   key={index}
-          //   name={index < item.spicyLevel ? "flame" : "flame-outline"} 
-          //   size={16} 
-          //   color={index < item.spicyLevel ? "#E40421" : "#999999"} 
-          // />
-          <FontAwesome6 
-            key={index}
-            name="pepper-hot" 
-            size={16}
-            color={index < item.spicyLevel ? "#E40421" : "#999999"}
-          />
-        ))}
+      <View style={styles.productInfo}>
+        <Text style={styles.productName}>{item.name}</Text>
+        <Text style={styles.productPrice}>£{item.price.toFixed(2)}</Text>
+  
+        <View style={styles.spicyLevelContainer}>
+          {[...Array(5)].map((_, index) => (
+            <FontAwesome6 
+              key={index}
+              name="pepper-hot" 
+              size={16}
+              color={index < item.spicyLevel ? "#E40421" : "#999999"}
+            />
+          ))}
+        </View>
+  
+        <Text style={styles.pairingsLabel}>Pairs well with:</Text>
+        <Text style={styles.pairings}>{item.pairings.join(', ')}</Text>
       </View>
-
-      {/* Food Pairings */}
-      <Text style={styles.pairingsLabel}>Pairs well with:</Text>
-      <Text style={styles.pairings}>{item.pairings.join(', ')}</Text>
-
+  
       <TouchableOpacity 
         style={styles.addToCartButton}
-        onPress={() => {
-          addToCart(item);
-          // Optionally, you can show a confirmation message or navigate to the cart
-          // navigation.navigate('Cart');
-        }}
+        onPress={() => addToCart(item)}
       >
         <Text style={styles.addToCartText}>Add to Cart</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
+
+  const handleRecommendationComplete = (recommendedProducts) => {
+    setRecommendations(recommendedProducts);
+    setShowRecommendation(false);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -124,22 +133,20 @@ export default function HomeScreen({ navigation }) {
           />
         </View>
       </View>
-      {/* {!hasRecommendations && (
-        <TouchableOpacity 
-          style={styles.recommendationButton}
-          onPress={() => navigation.navigate('Recommendation')}
-        >
-          <Text style={styles.recommendationButtonText}>Don't know what you're looking for?</Text>
-          <Text style={styles.recommendationButtonSubtext}>Let us help you find the perfect sauce!</Text>
-        </TouchableOpacity>
-      )} */}
+      
       <TouchableOpacity 
         style={styles.recommendationButton}
-        onPress={() => navigation.navigate('Recommendation')}
+        onPress={() => setShowRecommendation(true)}
       >
-        <Text style={styles.recommendationButtonText}>Don't know what you're looking for?</Text>
-        <Text style={styles.recommendationButtonSubtext}>Let us help you find the perfect sauce!</Text>
+        <View style={styles.recommendationContent}>
+          <Ionicons name="help-circle-outline" size={24} color="#FFFFFF" style={styles.recommendationIcon} />
+          <View style={styles.recommendationText}>
+            <Text style={styles.recommendationButtonTitle}>Not sure what to buy?</Text>
+            <Text style={styles.recommendationButtonSubtitle}>Find the perfect sauce!</Text>
+          </View>
+        </View>
       </TouchableOpacity>
+
       <FlatList
         data={filteredProducts}
         renderItem={renderProductItem}
@@ -148,21 +155,24 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={styles.productList}
         key={numColumns}
       />
+
       <BottomNavBar navigation={navigation} activeTab="Home" />
+      
+      <CustomAlert
+        visible={alertVisible}
+        title="Order Placed"
+        message="Your order has been successfully placed!"
+        onClose={handleCloseAlert}
+      />
+
+      <RecommendationPopup
+        visible={showRecommendation}
+        onClose={() => setShowRecommendation(false)}
+        navigation={navigation}
+      />
     </SafeAreaView>
   );
 }
-
-// ... rest of your code (getIconName, products, styles) stays the same
-const getIconName = (tab, isActive) => {
-  switch (tab) {
-    case 'Home': return isActive ? 'home' : 'home-outline';
-    case 'Shop': return isActive ? 'grid' : 'grid-outline';
-    case 'Cart': return isActive ? 'cart' : 'cart-outline';
-    case 'Profile': return isActive ? 'person' : 'person-outline';
-    default: return 'home-outline';
-  }
-};
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -178,11 +188,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: '#121212',
   },
-  // header: {
-  //   padding: 20,
-  //   paddingTop: 50,
-  //   backgroundColor: '#121212',
-  // },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -243,10 +248,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A1A1A',
     borderRadius: 10,
     padding: 15,
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 350, // Set a fixed height for all items
+  },
+  productInfo: {
+    flex: 1,
   },
   spicyLevelContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: 5,
     marginBottom: 5,
   },
@@ -255,12 +265,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FFFFFF',
     marginTop: 5,
+    textAlign: 'center',
   },
   pairings: {
     fontFamily: 'GothamBook',
     fontSize: 12,
     color: '#999999',
     marginBottom: 10,
+    textAlign: 'center',
   },
   productColor: {
     width: 30,
@@ -273,6 +285,7 @@ const styles = StyleSheet.create({
   productImage: {
     width: 120,
     height: 120,
+    alignSelf: 'center',
     marginBottom: 10,
   },
   productName: {
@@ -286,6 +299,7 @@ const styles = StyleSheet.create({
     fontFamily: 'GothamBook',
     fontSize: 14,
     color: '#FFFFFF',
+    textAlign: 'center',
     marginBottom: 10,
   },
   addToCartButton: {
@@ -293,6 +307,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
+    alignSelf: 'center',
+    marginTop: 10,
   },
   addToCartText: {
     fontFamily: 'GothamBold',
@@ -307,7 +323,6 @@ const styles = StyleSheet.create({
     // paddingBottom: add for ios
     borderTopWidth: 1,
     borderTopColor: '#2A2A2A',
-    // paddingBottom: Platform.OS === 'ios' ? 20 : 10, // Add extra padding for iOS
   },
   navItem: {
     alignItems: 'center',
@@ -323,20 +338,30 @@ const styles = StyleSheet.create({
   },
   recommendationButton: {
     backgroundColor: '#1A1A1A',
-    padding: 15,
-    margin: 20,
     borderRadius: 10,
+    padding: 10,
+    marginHorizontal: 10,
+    marginVertical: 5,
+    marginTop: 10,
+  },
+  recommendationContent: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  recommendationButtonText: {
+  recommendationIcon: {
+    marginRight: 10,
+  },
+  recommendationText: {
+    flex: 1,
+  },
+  recommendationButtonTitle: {
     fontFamily: 'GothamBold',
     fontSize: 16,
     color: '#FFFFFF',
   },
-  recommendationButtonSubtext: {
+  recommendationButtonSubtitle: {
     fontFamily: 'GothamBook',
-    fontSize: 14,
+    fontSize: 12,
     color: '#999999',
-    marginTop: 5,
   },
 });

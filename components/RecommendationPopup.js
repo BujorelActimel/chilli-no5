@@ -1,7 +1,5 @@
-// RecommendationScreen.js
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View, TouchableOpacity, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { products } from '../products';
 
@@ -23,7 +21,7 @@ const questions = [
   }
 ];
 
-export default function RecommendationScreen({ navigation }) {
+export default function RecommendationPopup({ visible, onClose, navigation }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
 
@@ -32,13 +30,11 @@ export default function RecommendationScreen({ navigation }) {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      // All questions answered, show recommendations
       showRecommendations();
     }
   };
 
   const showRecommendations = () => {
-    // Simple recommendation logic (you can make this more sophisticated)
     let recommendedProducts = products;
 
     if (answers.spiciness === 'Mild') {
@@ -57,56 +53,67 @@ export default function RecommendationScreen({ navigation }) {
       );
     }
 
-    // Navigate to results screen with recommendations
+    onClose();
+    setCurrentQuestion(0);
+    setAnswers({});
     navigation.navigate('RecommendationResults', { recommendations: recommendedProducts });
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Find Your Perfect Sauce</Text>
-      </View>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.questionText}>{questions[currentQuestion].text}</Text>
-        {questions[currentQuestion].options.map((option, index) => (
-          <TouchableOpacity 
-            key={index} 
-            style={styles.optionButton} 
-            onPress={() => handleAnswer(option)}
-          >
-            <Text style={styles.optionText}>{option}</Text>
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Ionicons name="close" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </SafeAreaView>
+          <Text style={styles.questionText}>{questions[currentQuestion].text}</Text>
+          {questions[currentQuestion].options.map((option, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.optionButton} 
+              onPress={() => handleAnswer(option)}
+            >
+              <Text style={styles.optionText}>{option}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  centeredView: {
     flex: 1,
-    backgroundColor: '#000000',
-  },
-  header: {
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#121212',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  backButton: {
-    marginRight: 15,
-  },
-  headerTitle: {
-    fontFamily: 'AbhayaLibreBold',
-    fontSize: 24,
-    color: '#FFFFFF',
-  },
-  content: {
-    padding: 20,
+  modalView: {
+    margin: 20,
+    backgroundColor: '#1A1A1A',
+    borderRadius: 20,
+    padding: 35,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '80%',
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
   },
   questionText: {
     fontFamily: 'GothamBold',
@@ -116,7 +123,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   optionButton: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#2A2A2A',
     padding: 15,
     borderRadius: 10,
     width: '100%',

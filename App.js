@@ -4,12 +4,12 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import HomeScreen from './screens/HomeScreen';  // Move your main screen content here
+import HomeScreen from './screens/HomeScreen';
 import CartScreen from './screens/CartScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import CheckoutScreen from './screens/CheckoutScreen';
 import { CartProvider } from './CartContext';
-import RecommendationScreen from './screens/RecommendationScreen';
+import WishlistScreen from './screens/WishlistScreen';
 import RecommendationResultsScreen from './screens/RecommendationResultsScreen';
 
 const Stack = createStackNavigator();
@@ -47,7 +47,8 @@ export default function App() {
           <Stack.Screen name="Cart" component={CartScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="Checkout" component={CheckoutScreen} />
-          <Stack.Screen name="Recommendation" component={RecommendationScreen} />
+          {/* <Stack.Screen name="Recommendation" component={RecommendationScreen} /> */}
+          <Stack.Screen name="Wishlist" component={WishlistScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </CartProvider>
@@ -55,9 +56,5 @@ export default function App() {
 }
 
 /*
-TODO: 
-      - `don't know what you're looking for?` feature
-      - settings
-      - orders
-      - profile edit
+TODO:
 */
