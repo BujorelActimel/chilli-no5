@@ -5,6 +5,7 @@
 - payment
 
 ## Important
+- filter
 - fix recommendations
 - wishlist
 - add product 'page' when u tap on it

@@ -1,10 +1,26 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../AuthContext';
 
 export default function ProfileScreen({ navigation }) {
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      const result = await logout();
+      if (!result.success) {
+        Alert.alert('Logout Failed', result.message || 'An error occurred during logout');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Logout Failed', 'An unexpected error occurred');
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
@@ -59,11 +75,11 @@ export default function ProfileScreen({ navigation }) {
           <Ionicons name="chevron-forward" size={24} color="#FFFFFF" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>Log Out</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
