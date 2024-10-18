@@ -11,7 +11,7 @@
 - use product data for filtering
 - error messages modals (DONE)
 - profile screen
-- long list rendering bullshit
+- long list rendering bullshit (DONE)
 - splash-art, icons, all this shit
 
 ## Nice to have
