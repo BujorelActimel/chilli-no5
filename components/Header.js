@@ -24,7 +24,7 @@ export default function Header({ title }) {
           <Text style={styles.headerTitle}>{title}</Text>
         ) : (
           <Image
-            source={require('../assets/extended-white-logo.png')}
+            source={require('../assets/long-logo.png')}
             style={styles.logo}
             resizeMode="contain"
           />

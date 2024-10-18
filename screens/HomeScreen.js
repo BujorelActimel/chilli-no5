@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../CartContext';
@@ -12,11 +12,12 @@ import BottomNavBar from '../components/BottomNavBar';
 import RecommendationPopup from '../components/RecommendationPopup';
 import FilterModal from '../components/FilterModal';
 import { XMLParser } from 'fast-xml-parser';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function HomeScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Home');
   const { addToCart } = useCart();
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { addToWishlist, removeFromWishlist, isInWishlist, wishlistItems, refreshWishlist } = useWishlist();
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]); // State to hold the fetched products
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -32,36 +33,31 @@ export default function HomeScreen({ navigation }) {
     category: null,
   });
 
+  const wishlistKey = JSON.stringify(wishlistItems.map(item => item.id));
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-          const response = await fetch('https://chilli-no5.com/wp-content/uploads/woo-feed/google/xml/feed-uk-3.xml');
-          const xmlString = await response.text();
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await fetch('https://chilli-no5.com/wp-content/uploads/woo-feed/google/xml/feed-uk-3.xml');
+      const xmlString = await response.text();
   
-          // Parse the XML string into a JavaScript object
-          const parser = new XMLParser();
-          const parsedXML = parser.parse(xmlString);
+      const parser = new XMLParser();
+      const parsedXML = parser.parse(xmlString);
   
-          // Map the parsed XML to your product structure
-          const fetchedProducts = parsedXML.rss.channel.item.map(item => ({
-              id: item['g:id'],
-              name: item['g:title'],
-              price: parseFloat(item['g:price'].replace(' USD', '')),
-              image: { uri: item['g:image_link'] },
-              pairings: [], // You can set a default or fetch pairings differently
-              spicyLevel: 0, // If spicyLevel is not in XML, set a default or fetch differently
-          }));
+      const fetchedProducts = parsedXML.rss.channel.item.map(item => ({
+        id: item['g:id'],
+        name: item['g:title'],
+        price: parseFloat(item['g:price'].replace(' USD', '')),
+        image: { uri: item['g:image_link'] },
+        pairings: [],
+        spicyLevel: 0,
+      }));
   
-          setProducts(fetchedProducts);
-          setFilteredProducts(fetchedProducts); // Initially set the filtered products to the fetched ones
-      } catch (error) {
-          console.error("Error fetching and parsing XML", error);
-          setProducts([]); // Set an empty array in case of an error
-      }
-    };
-
-    fetchProducts();
+      setProducts(fetchedProducts);
+      setFilteredProducts(fetchedProducts);
+    } catch (error) {
+      console.error("Error fetching and parsing XML", error);
+      setProducts([]);
+    }
   }, []);
 
   useEffect(() => {
@@ -79,6 +75,17 @@ export default function HomeScreen({ navigation }) {
 
     return unsubscribe;
   }, [navigation]);
+
+  useEffect(() => {
+    applyFilters(searchQuery, filters);
+  }, [products, searchQuery, filters, wishlistKey]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProducts();
+      refreshWishlist();
+    }, [fetchProducts, refreshWishlist])
+  );
 
   const handleCloseAlert = () => {
     setAlertVisible(false);
@@ -135,49 +142,44 @@ export default function HomeScreen({ navigation }) {
     applyFilters(searchQuery, clearedFilters);
   };
 
-
-  const renderProductItem = ({ item }) => (
-    <TouchableOpacity style={styles.productItem}>
+  const renderProductItem = useCallback(({ item }) => (
+    <View style={styles.productItem}>
       <Image source={item.image} style={styles.productImage} />
       <View style={styles.productInfo}>
-        <Text style={styles.productName}>{item.name}</Text>
+        <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
         <Text style={styles.productPrice}>£{item.price.toFixed(2)}</Text>
-  
-        <View style={styles.spicyLevelContainer}>
-          {[...Array(5)].map((_, index) => (
-            <FontAwesome6 
-              key={index}
-              name="pepper-hot" 
-              size={16}
-              color={index < item.spicyLevel ? "#E40421" : "#999999"}
-            />
-          ))}
-        </View>
-  
-        <Text style={styles.pairingsLabel}>Pairs well with:</Text>
-        <Text style={styles.pairings}>{item.pairings.join(', ')}</Text>
       </View>
-  
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
-          style={styles.addToCartButton}
-          onPress={() => addToCart(item)}
-        >
-          <Text style={styles.buttonText}>Add to Cart</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.wishlistButton}
-          onPress={() => isInWishlist(item.id) ? removeFromWishlist(item.id) : addToWishlist(item)}
+          style={[
+            styles.wishlistButton,
+            isInWishlist(item.id) && styles.wishlistButtonActive
+          ]}
+          onPress={() => {
+            if (isInWishlist(item.id)) {
+              removeFromWishlist(item.id);
+            } else {
+              addToWishlist(item);
+            }
+          }}
         >
           <Ionicons 
             name={isInWishlist(item.id) ? "heart" : "heart-outline"} 
-            size={24} 
-            color={isInWishlist(item.id) ? "#E40421" : "#FFFFFF"} 
+            size={20} 
+            color={isInWishlist(item.id) ? "#FFFFFF" : "#E40421"} 
           />
         </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.addToCartButton}
+          onPress={() => {
+            addToCart(item);
+          }}
+        >
+          <Text style={styles.addToCartText}>Add to Cart</Text>
+        </TouchableOpacity>
       </View>
-    </TouchableOpacity>
-  );
+    </View>
+  ), [isInWishlist, removeFromWishlist, addToWishlist]);
 
   const handleRecommendationComplete = (recommendedFilters) => {
     setFilters(recommendedFilters);
@@ -223,7 +225,7 @@ export default function HomeScreen({ navigation }) {
         keyExtractor={item => item.id}
         numColumns={numColumns}
         contentContainerStyle={styles.productList}
-        key={numColumns}
+        key={`${numColumns}-${wishlistKey}`}
       />
 
       <BottomNavBar navigation={navigation} activeTab="Home" />
@@ -333,44 +335,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 15,
     justifyContent: 'space-between',
-    height: 350, // Set a fixed height for all items
+    minHeight: 250,
   },
   productInfo: {
     flex: 1,
-  },
-  spicyLevelContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 5,
-    marginBottom: 5,
-  },
-  pairingsLabel: {
-    fontFamily: 'GothamBold',
-    fontSize: 12,
-    color: '#FFFFFF',
-    marginTop: 5,
-    textAlign: 'center',
-  },
-  pairings: {
-    fontFamily: 'GothamBook',
-    fontSize: 12,
-    color: '#999999',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  productColor: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    position: 'absolute',
-    top: 5,
-    right: 5,
   },
   productImage: {
     width: 120,
     height: 120,
     alignSelf: 'center',
     marginBottom: 10,
+    resizeMode: 'contain',
   },
   productName: {
     fontFamily: 'GothamBold',
@@ -378,6 +353,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 5,
+    flexWrap: 'wrap',
   },
   productPrice: {
     fontFamily: 'GothamBook',
@@ -386,19 +362,37 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  wishlistButton: {
+    backgroundColor: '#2A2A2A',
+    padding: 8,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wishlistButtonActive: {
+    backgroundColor: '#E40421',
+  },
   addToCartButton: {
     backgroundColor: '#E40421',
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
     flex: 1,
-    marginRight: 5,
+    marginLeft: 10,
   },
   addToCartText: {
     fontFamily: 'GothamBold',
     fontSize: 12,
     color: '#FFFFFF',
+    textAlign: 'center',
   },
+
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',

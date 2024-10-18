@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const WishlistContext = createContext();
@@ -8,11 +8,7 @@ export const useWishlist = () => useContext(WishlistContext);
 export const WishlistProvider = ({ children }) => {
   const [wishlistItems, setWishlistItems] = useState([]);
 
-  useEffect(() => {
-    loadWishlist();
-  }, []);
-
-  const loadWishlist = async () => {
+  const loadWishlist = useCallback(async () => {
     try {
       const storedWishlist = await AsyncStorage.getItem('wishlist');
       if (storedWishlist) {
@@ -21,7 +17,11 @@ export const WishlistProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to load wishlist:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadWishlist();
+  }, [loadWishlist]);
 
   const saveWishlist = async (items) => {
     try {
@@ -47,8 +47,16 @@ export const WishlistProvider = ({ children }) => {
     return wishlistItems.some(item => item.id === itemId);
   };
 
+  const refreshWishlist = loadWishlist;
+
   return (
-    <WishlistContext.Provider value={{ wishlistItems, addToWishlist, removeFromWishlist, isInWishlist }}>
+    <WishlistContext.Provider value={{ 
+      wishlistItems, 
+      addToWishlist, 
+      removeFromWishlist, 
+      isInWishlist,
+      refreshWishlist
+    }}>
       {children}
     </WishlistContext.Provider>
   );

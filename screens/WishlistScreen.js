@@ -1,38 +1,72 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/Header';
 import BottomNavBar from '../components/BottomNavBar';
 import { useCart } from '../CartContext';
-import { useWishlist } from '../WishlistContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import CustomAlert from '../components/CustomAlert';
 
 export default function WishlistScreen({ navigation }) {
-    const { wishlistItems, removeFromWishlist } = useWishlist();
+    const [wishlistItems, setWishlistItems] = useState([]);
     const { addToCart } = useCart();
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertMessage, setAlertMessage] = useState('');
+    const [itemToRemove, setItemToRemove] = useState(null);
+
+    useEffect(() => {
+        loadWishlist();
+    }, []);
+
+    const loadWishlist = async () => {
+        try {
+            const wishlistJson = await AsyncStorage.getItem('wishlist');
+            if (wishlistJson) {
+                setWishlistItems(JSON.parse(wishlistJson));
+            }
+        } catch (error) {
+            console.error('Failed to load wishlist:', error);
+        }
+    };
+
+    const saveWishlist = async (newWishlist) => {
+        try {
+            await AsyncStorage.setItem('wishlist', JSON.stringify(newWishlist));
+        } catch (error) {
+            console.error('Failed to save wishlist:', error);
+        }
+    };
+
+    const showAlert = (title, message, item = null) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertVisible(true);
+        setItemToRemove(item);
+    };
+
+    const handleAlertClose = () => {
+        setAlertVisible(false);
+        if (alertTitle === "Remove from Wishlist" && itemToRemove) {
+            const newWishlist = wishlistItems.filter(item => item.id !== itemToRemove.id);
+            setWishlistItems(newWishlist);
+            saveWishlist(newWishlist);
+        }
+        setItemToRemove(null);
+    };
+
+    const removeFromWishlist = (item) => {
+        showAlert(
+            "Remove from Wishlist",
+            "Are you sure you want to remove this item from your wishlist?",
+            item
+        );
+    };
 
     const handleAddToCart = (item) => {
         addToCart(item);
-        Alert.alert("Added to Cart", `${item.name} has been added to your cart.`);
-    };
-
-    const handleRemoveFromWishlist = (itemId) => {
-        Alert.alert(
-            "Remove from Wishlist",
-            "Are you sure you want to remove this item from your wishlist?",
-            [
-                {
-                    text: "Cancel",
-                    style: "cancel"
-                },
-                {
-                    text: "Remove",
-                    onPress: () => removeFromWishlist(itemId),
-                    style: "destructive"
-                }
-            ]
-        );
+        showAlert("Added to Cart", `${item.name} has been added to your cart.`);
     };
 
     const renderWishlistItem = ({ item }) => (
@@ -41,22 +75,12 @@ export default function WishlistScreen({ navigation }) {
             <View style={styles.itemDetails}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemPrice}>£{item.price.toFixed(2)}</Text>
-                <View style={styles.spicyLevelContainer}>
-                    {[...Array(5)].map((_, index) => (
-                        <FontAwesome6 
-                            key={index}
-                            name="pepper-hot" 
-                            size={16}
-                            color={index < item.spicyLevel ? "#E40421" : "#999999"}
-                        />
-                    ))}
-                </View>
             </View>
             <View style={styles.itemActions}>
                 <TouchableOpacity onPress={() => handleAddToCart(item)} style={styles.addToCartButton}>
                     <Ionicons name="cart" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleRemoveFromWishlist(item.id)} style={styles.removeButton}>
+                <TouchableOpacity onPress={() => removeFromWishlist(item)} style={styles.removeButton}>
                     <Ionicons name="trash-outline" size={24} color="#E40421" />
                 </TouchableOpacity>
             </View>
@@ -86,6 +110,12 @@ export default function WishlistScreen({ navigation }) {
                 </View>
             )}
             <BottomNavBar navigation={navigation} activeTab="Wishlist" />
+            <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onClose={handleAlertClose}
+            />
         </SafeAreaView>
     );
 }
@@ -125,11 +155,6 @@ const styles = StyleSheet.create({
         fontFamily: 'GothamBook',
         fontSize: 14,
         color: '#999999',
-        marginBottom: 4,
-    },
-    spicyLevelContainer: {
-        flexDirection: 'row',
-        marginTop: 4,
     },
     itemActions: {
         flexDirection: 'row',

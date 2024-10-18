@@ -8,12 +8,10 @@
 - filter (DONE)
 - fix recommendations (DONE)
 - wishlist (DONE)
-- add product 'page' when u tap on it
 - use product data for filtering
-- error messages modals
+- error messages modals (DONE)
 - profile screen
 - long list rendering bullshit
-- fetch the spicyness level from somewhere(???), or remove it
 - splash-art, icons, all this shit
 
 ## Nice to have
