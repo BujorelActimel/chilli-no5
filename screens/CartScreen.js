@@ -120,12 +120,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignItems: 'center',
   },
-  productColor: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginRight: 10,
-  },
   productImage: {
     width: 60,
     height: 60,

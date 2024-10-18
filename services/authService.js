@@ -133,46 +133,6 @@ const authService = {
       console.error('Error getting current user email:', error);
       return null;
     }
-  },
-
-  async getUserProfile(email) {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/crm/v3/objects/contacts/search`, {
-        filterGroups: [{
-          filters: [{
-            propertyName: 'email',
-            operator: 'EQ',
-            value: email
-          }]
-        }],
-        properties: ['email', 'firstname', 'lastname', 'createdate', 'lastmodifieddate'],
-        limit: 1
-      }, {
-        headers: {
-          'Authorization': `Bearer ${ACCESS_TOKEN}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.data.results && response.data.results.length > 0) {
-        const user = response.data.results[0];
-        return {
-          success: true,
-          profile: {
-            id: user.id,
-            email: user.properties.email,
-            firstName: user.properties.firstname,
-            lastName: user.properties.lastname,
-            createdAt: user.properties.createdate,
-            lastModified: user.properties.lastmodifieddate
-          }
-        };
-      }
-      return { success: false, message: 'User not found' };
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      return { success: false, message: 'An error occurred while fetching the user profile' };
-    }
   }
 };
 

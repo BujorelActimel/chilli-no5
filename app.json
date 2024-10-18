@@ -34,9 +34,7 @@
       }
     },
     "owner": "bujortopor",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/e2502e41-b37a-48e5-8091-d2a8efefe861"
     }
