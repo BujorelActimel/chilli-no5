@@ -7,6 +7,7 @@ import HomeScreen from './screens/HomeScreen';
 import CartScreen from './screens/CartScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import CheckoutScreen from './screens/CheckoutScreen';
+import ProductScreen from './screens/ProductScreen';
 import { CartProvider } from './CartContext';
 import WishlistScreen from './screens/WishlistScreen';
 import LoginScreen from './screens/LoginScreen';
@@ -42,6 +43,7 @@ function Navigation() {
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="Checkout" component={CheckoutScreen} />
             <Stack.Screen name="Wishlist" component={WishlistScreen} />
+            <Stack.Screen name="Product" component={ProductScreen} />
           </>
         ) : (
           <>

@@ -1,11 +1,13 @@
-// components/ProductItem.js
 import React from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 import defaultProductImage from '../assets/product-placeholder.png';
 
 const ProductItem = React.memo(({ item, isInWishlist, addToWishlist, removeFromWishlist, addToCart }) => {
+  const navigation = useNavigation();
+
   const handleToggleWishlist = () => {
     if (isInWishlist(item.id)) {
       removeFromWishlist(item.id);
@@ -21,8 +23,12 @@ const ProductItem = React.memo(({ item, isInWishlist, addToWishlist, removeFromW
     return defaultProductImage;
   };
 
+  const handleProductPress = () => {
+    navigation.navigate('Product', { product: item });
+  };
+
   return (
-    <View style={styles.productItem}>
+    <TouchableOpacity style={styles.productItem} onPress={handleProductPress}>
       <Image source={getImageSource()} style={styles.productImage} />
       <View style={styles.productInfo}>
         <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
@@ -49,7 +55,7 @@ const ProductItem = React.memo(({ item, isInWishlist, addToWishlist, removeFromW
           <Text style={styles.addToCartText}>Add to Cart</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 });
 

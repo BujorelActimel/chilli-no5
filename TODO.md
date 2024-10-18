@@ -1,19 +1,16 @@
 # TODO
 
-## Mandatory
-- add user auth with the existing userbase(HubSpot) (KIND OF DONE)
+- auth with passwords
 - payment
-
-## Important
-- filter (DONE)
-- fix recommendations (DONE)
-- wishlist (DONE)
-- use product data for filtering
-- error messages modals (DONE)
-- profile screen
-- long list rendering bullshit (DONE)
+- missing product data (descriptions, spiceness levels, ingridients)
 - splash-art, icons, all this shit
-
-## Nice to have
+- google play store/app store dev accounts / deployment
 - refactor this fuckin mess
-- setup deployment
+
+
+# meeting
+
+- demo
+- heat, descriere, pairings -> filter, 'dont know what u want'
+- parole
+- plati
