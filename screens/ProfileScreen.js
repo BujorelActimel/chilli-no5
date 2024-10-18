@@ -1,11 +1,54 @@
-import React from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../AuthContext';
+import authService from '../services/authService';
 
 export default function ProfileScreen({ navigation }) {
   const { logout } = useAuth();
+  const [userData, setUserData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    setIsLoading(true);
+    try {
+      const cachedUserData = await authService.getCurrentUserData();
+      if (cachedUserData) {
+        setUserData(cachedUserData);
+        setIsLoading(false);
+      } else {
+        await fetchUserData();
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      Alert.alert('Error', 'Failed to load user data');
+      setIsLoading(false);
+    }
+  };
+
+  const fetchUserData = async () => {
+    try {
+      const userEmail = await authService.getCurrentUserEmail();
+      if (userEmail) {
+        const result = await authService.getUserProfile(userEmail);
+        if (result.success) {
+          setUserData(result.profile);
+        } else {
+          Alert.alert('Error', 'Failed to fetch user data');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      Alert.alert('Error', 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -18,6 +61,14 @@ export default function ProfileScreen({ navigation }) {
       Alert.alert('Logout Failed', 'An unexpected error occurred');
     }
   };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#E40421" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -33,8 +84,8 @@ export default function ProfileScreen({ navigation }) {
           source={require('../assets/profile-placeholder.png')}
           style={styles.profileImage}
         />
-        <Text style={styles.name}>John Doe</Text>
-        <Text style={styles.email}>johndoe@example.com</Text>
+        <Text style={styles.name}>{userData?.firstName} {userData?.lastName}</Text>
+        <Text style={styles.email}>{userData?.email}</Text>
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
@@ -78,6 +129,7 @@ export default function ProfileScreen({ navigation }) {
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>Log Out</Text>
         </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -89,11 +141,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   header: {
-    padding: 20,
-    paddingTop: 50,
-    backgroundColor: '#121212',
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#121212',
   },
   backButton: {
     marginRight: 20,
@@ -172,5 +224,11 @@ const styles = StyleSheet.create({
     fontFamily: 'GothamBold',
     fontSize: 18,
     color: '#FFFFFF',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000000',
   },
 });

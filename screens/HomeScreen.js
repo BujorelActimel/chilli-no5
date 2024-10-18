@@ -9,6 +9,7 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Header from '../components/Header';
 import BottomNavBar from '../components/BottomNavBar';
 import RecommendationPopup from '../components/RecommendationPopup';
+import FilterModal from '../components/FilterModal'; // We'll create this component next
 import { XMLParser } from 'fast-xml-parser';
 
 export default function HomeScreen({ navigation }) {
@@ -22,6 +23,13 @@ export default function HomeScreen({ navigation }) {
   const [alertVisible, setAlertVisible] = useState(false);
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filters, setFilters] = useState({
+    spicyLevel: null,
+    priceRange: null,
+    category: null,
+  });
+
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -76,11 +84,55 @@ export default function HomeScreen({ navigation }) {
 
   const handleSearch = (text) => {
     setSearchQuery(text);
-    const filtered = products.filter(product =>
-      product.name.toLowerCase().includes(text.toLowerCase())
-    );
+    applyFilters(text, filters);
+  };
+
+  const applyFilters = (searchText, filterOptions) => {
+    let filtered = products;
+
+    // Apply search filter
+    if (searchText) {
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+
+    // Apply spicy level filter
+    if (filterOptions.spicyLevel) {
+      filtered = filtered.filter(product => product.spicyLevel === filterOptions.spicyLevel);
+    }
+
+    // Apply price range filter
+    if (filterOptions.priceRange) {
+      const [min, max] = filterOptions.priceRange;
+      filtered = filtered.filter(product => product.price >= min && product.price <= max);
+    }
+
+    // Apply category filter
+    if (filterOptions.category) {
+      filtered = filtered.filter(product => product.category === filterOptions.category);
+    }
+
     setFilteredProducts(filtered);
   };
+
+  const handleFilterApply = (newFilters) => {
+    setFilters(newFilters);
+    setShowFilterModal(false);
+    applyFilters(searchQuery, newFilters);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters = {
+      spicyLevel: null,
+      priceRange: null,
+      category: null,
+    };
+    setFilters(clearedFilters);
+    setShowFilterModal(false);
+    applyFilters(searchQuery, clearedFilters);
+  };
+
 
   const renderProductItem = ({ item }) => (
     <TouchableOpacity style={styles.productItem}>
@@ -131,6 +183,9 @@ export default function HomeScreen({ navigation }) {
             value={searchQuery}
             onChangeText={handleSearch}
           />
+          <TouchableOpacity onPress={() => setShowFilterModal(true)}>
+            <Ionicons name="filter" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
       </View>
       
@@ -169,6 +224,14 @@ export default function HomeScreen({ navigation }) {
         visible={showRecommendation}
         onClose={() => setShowRecommendation(false)}
         navigation={navigation}
+      />
+
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleFilterApply}
+        onClear={handleClearFilters}
+        currentFilters={filters}
       />
     </SafeAreaView>
   );

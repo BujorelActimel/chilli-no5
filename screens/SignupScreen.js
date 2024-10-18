@@ -1,14 +1,16 @@
-// screens/SignupScreen.js
 import React, { useState } from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import authService from '../services/authService';
+import { useAuth } from '../AuthContext';
 
 export default function SignupScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   const handleSignup = async () => {
     if (!email || !password || !firstName || !lastName) {
@@ -16,11 +18,25 @@ export default function SignupScreen({ navigation }) {
       return;
     }
 
-    const result = await authService.register(email, password, firstName, lastName);
-    if (result.success) {
-      navigation.replace('Home');
-    } else {
-      Alert.alert('Signup Failed', result.message);
+    setIsLoading(true);
+    try {
+      const result = await authService.register(email, password, firstName, lastName);
+      if (result.success) {
+        // After successful registration, log the user in
+        const loginResult = await login(email, password);
+        if (loginResult.success) {
+          navigation.replace('Home');
+        } else {
+          Alert.alert('Login Failed', loginResult.message);
+        }
+      } else {
+        Alert.alert('Signup Failed', result.message);
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      Alert.alert('Signup Failed', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
