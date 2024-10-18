@@ -1,41 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/Header';
 import BottomNavBar from '../components/BottomNavBar';
 import { useCart } from '../CartContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useWishlist } from '../WishlistContext';
 import { Ionicons } from '@expo/vector-icons';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 export default function WishlistScreen({ navigation }) {
-    const [wishlistItems, setWishlistItems] = useState([]);
+    const { wishlistItems, removeFromWishlist } = useWishlist();
     const { addToCart } = useCart();
 
-    useEffect(() => {
-        loadWishlist();
-    }, []);
-
-    const loadWishlist = async () => {
-        try {
-            const wishlistJson = await AsyncStorage.getItem('wishlist');
-            if (wishlistJson) {
-                setWishlistItems(JSON.parse(wishlistJson));
-            }
-        } catch (error) {
-            console.error('Failed to load wishlist:', error);
-        }
+    const handleAddToCart = (item) => {
+        addToCart(item);
+        Alert.alert("Added to Cart", `${item.name} has been added to your cart.`);
     };
 
-    const saveWishlist = async (newWishlist) => {
-        try {
-            await AsyncStorage.setItem('wishlist', JSON.stringify(newWishlist));
-        } catch (error) {
-            console.error('Failed to save wishlist:', error);
-        }
-    };
-
-    const removeFromWishlist = (itemId) => {
+    const handleRemoveFromWishlist = (itemId) => {
         Alert.alert(
             "Remove from Wishlist",
             "Are you sure you want to remove this item from your wishlist?",
@@ -46,20 +28,11 @@ export default function WishlistScreen({ navigation }) {
                 },
                 {
                     text: "Remove",
-                    onPress: () => {
-                        const newWishlist = wishlistItems.filter(item => item.id !== itemId);
-                        setWishlistItems(newWishlist);
-                        saveWishlist(newWishlist);
-                    },
+                    onPress: () => removeFromWishlist(itemId),
                     style: "destructive"
                 }
             ]
         );
-    };
-
-    const handleAddToCart = (item) => {
-        addToCart(item);
-        Alert.alert("Added to Cart", `${item.name} has been added to your cart.`);
     };
 
     const renderWishlistItem = ({ item }) => (
@@ -83,7 +56,7 @@ export default function WishlistScreen({ navigation }) {
                 <TouchableOpacity onPress={() => handleAddToCart(item)} style={styles.addToCartButton}>
                     <Ionicons name="cart" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => removeFromWishlist(item.id)} style={styles.removeButton}>
+                <TouchableOpacity onPress={() => handleRemoveFromWishlist(item.id)} style={styles.removeButton}>
                     <Ionicons name="trash-outline" size={24} color="#E40421" />
                 </TouchableOpacity>
             </View>

@@ -3,9 +3,11 @@ import React from 'react';
 import { StyleSheet, View, Image, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../CartContext';
+import { useNavigation } from '@react-navigation/native';
 
-export default function Header({ navigation }) {
+export default function Header({ title }) {
   const { cartItems } = useCart();
+  const navigation = useNavigation();
 
   return (
     <View style={styles.header}>
@@ -18,11 +20,15 @@ export default function Header({ navigation }) {
             </View>
           )}
         </TouchableOpacity>
-        <Image
-          source={require('../assets/extended-white-logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        {title ? (
+          <Text style={styles.headerTitle}>{title}</Text>
+        ) : (
+          <Image
+            source={require('../assets/extended-white-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        )}
         <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.iconContainer}>
           <Image
             source={require('../assets/profile-placeholder.png')}
@@ -37,14 +43,19 @@ export default function Header({ navigation }) {
 const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
-    paddingTop: 10, // Reduced top padding
-    paddingBottom: 10, // Added bottom padding
+    paddingTop: 10,
+    paddingBottom: 10,
     backgroundColor: '#121212',
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  headerTitle: {
+    fontFamily: 'AbhayaLibreBold',
+    fontSize: 24,
+    color: '#FFFFFF',
   },
   iconContainer: {
     width: 40,

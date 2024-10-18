@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { products } from '../products';
 
 const questions = [
   {
@@ -21,7 +20,7 @@ const questions = [
   }
 ];
 
-export default function RecommendationPopup({ visible, onClose, navigation }) {
+export default function RecommendationPopup({ visible, onClose, onComplete }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
 
@@ -30,33 +29,55 @@ export default function RecommendationPopup({ visible, onClose, navigation }) {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      showRecommendations();
+      completeRecommendation();
     }
   };
 
-  const showRecommendations = () => {
-    let recommendedProducts = products;
+  const completeRecommendation = () => {
+    let recommendedFilters = {
+      spicyLevel: null,
+      priceRange: null,
+      category: null
+    };
 
-    if (answers.spiciness === 'Mild') {
-      recommendedProducts = recommendedProducts.filter(p => p.spicyLevel <= 2);
-    } else if (answers.spiciness === 'Medium') {
-      recommendedProducts = recommendedProducts.filter(p => p.spicyLevel === 3);
-    } else if (answers.spiciness === 'Hot') {
-      recommendedProducts = recommendedProducts.filter(p => p.spicyLevel === 4);
-    } else if (answers.spiciness === 'Extra Hot') {
-      recommendedProducts = recommendedProducts.filter(p => p.spicyLevel === 5);
+    // Set spicy level
+    switch (answers.spiciness) {
+      case 'Mild':
+        recommendedFilters.spicyLevel = 1;
+        break;
+      case 'Medium':
+        recommendedFilters.spicyLevel = 3;
+        break;
+      case 'Hot':
+        recommendedFilters.spicyLevel = 4;
+        break;
+      case 'Extra Hot':
+        recommendedFilters.spicyLevel = 5;
+        break;
     }
 
-    if (answers.pairing) {
-      recommendedProducts = recommendedProducts.filter(p => 
-        p.pairings.some(pairing => pairing.toLowerCase().includes(answers.pairing.toLowerCase()))
-      );
+    // Set category based on pairing
+    switch (answers.pairing) {
+      case 'Mexican':
+        recommendedFilters.category = 'Hot Sauce';
+        break;
+      case 'Asian':
+        recommendedFilters.category = 'Chilli Oil';
+        break;
+      case 'BBQ':
+        recommendedFilters.category = 'BBQ Sauce';
+        break;
+      case 'Seafood':
+      case 'Vegetarian':
+        recommendedFilters.category = 'Seasoning';
+        break;
     }
 
-    onClose();
+    // Reset for next use
     setCurrentQuestion(0);
     setAnswers({});
-    navigation.navigate('RecommendationResults', { recommendations: recommendedProducts });
+
+    onComplete(recommendedFilters);
   };
 
   return (

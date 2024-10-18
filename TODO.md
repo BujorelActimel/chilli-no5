@@ -1,14 +1,15 @@
 # TODO
 
 ## Mandatory
-- add user auth with the existing userbase(HubSpot)
+- add user auth with the existing userbase(HubSpot) (KIND OF DONE)
 - payment
 
 ## Important
 - filter (DONE)
-- fix recommendations
-- wishlist
+- fix recommendations (DONE)
+- wishlist (DONE)
 - add product 'page' when u tap on it
+- use product data for filtering
 - error messages modals
 - profile screen
 - long list rendering bullshit

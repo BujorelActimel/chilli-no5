@@ -9,10 +9,10 @@ import ProfileScreen from './screens/ProfileScreen';
 import CheckoutScreen from './screens/CheckoutScreen';
 import { CartProvider } from './CartContext';
 import WishlistScreen from './screens/WishlistScreen';
-import RecommendationResultsScreen from './screens/RecommendationResultsScreen';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import { AuthProvider, useAuth } from './AuthContext';
+import { WishlistProvider } from './WishlistContext';
 
 const Stack = createStackNavigator();
 
@@ -38,7 +38,6 @@ function Navigation() {
         {isAuthenticated ? (
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="RecommendationResults" component={RecommendationResultsScreen} />
             <Stack.Screen name="Cart" component={CartScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="Checkout" component={CheckoutScreen} />
@@ -68,9 +67,11 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <CartProvider>
-        <Navigation />
-      </CartProvider>
+      <WishlistProvider>
+        <CartProvider>
+          <Navigation />
+        </CartProvider>
+      </WishlistProvider>
     </AuthProvider>
   );
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../CartContext';
+import { useWishlist } from '../WishlistContext';
 import { useWindowDimensions } from 'react-native';
 import CustomAlert from '../components/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,12 +10,13 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Header from '../components/Header';
 import BottomNavBar from '../components/BottomNavBar';
 import RecommendationPopup from '../components/RecommendationPopup';
-import FilterModal from '../components/FilterModal'; // We'll create this component next
+import FilterModal from '../components/FilterModal';
 import { XMLParser } from 'fast-xml-parser';
 
 export default function HomeScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Home');
   const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]); // State to hold the fetched products
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -156,18 +158,31 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.pairings}>{item.pairings.join(', ')}</Text>
       </View>
   
-      <TouchableOpacity 
-        style={styles.addToCartButton}
-        onPress={() => addToCart(item)}
-      >
-        <Text style={styles.addToCartText}>Add to Cart</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={styles.addToCartButton}
+          onPress={() => addToCart(item)}
+        >
+          <Text style={styles.buttonText}>Add to Cart</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.wishlistButton}
+          onPress={() => isInWishlist(item.id) ? removeFromWishlist(item.id) : addToWishlist(item)}
+        >
+          <Ionicons 
+            name={isInWishlist(item.id) ? "heart" : "heart-outline"} 
+            size={24} 
+            color={isInWishlist(item.id) ? "#E40421" : "#FFFFFF"} 
+          />
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   );
 
-  const handleRecommendationComplete = (recommendedProducts) => {
-    setRecommendations(recommendedProducts);
+  const handleRecommendationComplete = (recommendedFilters) => {
+    setFilters(recommendedFilters);
     setShowRecommendation(false);
+    applyFilters(searchQuery, recommendedFilters);
   };
 
   return (
@@ -232,6 +247,12 @@ export default function HomeScreen({ navigation }) {
         onApply={handleFilterApply}
         onClear={handleClearFilters}
         currentFilters={filters}
+      />
+
+      <RecommendationPopup
+        visible={showRecommendation}
+        onClose={() => setShowRecommendation(false)}
+        onComplete={handleRecommendationComplete}
       />
     </SafeAreaView>
   );
@@ -370,8 +391,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
-    alignSelf: 'center',
-    marginTop: 10,
+    flex: 1,
+    marginRight: 5,
   },
   addToCartText: {
     fontFamily: 'GothamBold',
@@ -426,5 +447,23 @@ const styles = StyleSheet.create({
     fontFamily: 'GothamBook',
     fontSize: 12,
     color: '#999999',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  wishlistButton: {
+    backgroundColor: '#2A2A2A',
+    padding: 8,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontFamily: 'GothamBold',
+    fontSize: 12,
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
 });
