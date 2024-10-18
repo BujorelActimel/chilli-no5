@@ -1,31 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
+// HomeScreen.js
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../CartContext';
 import { useWishlist } from '../WishlistContext';
 import { useWindowDimensions } from 'react-native';
 import CustomAlert from '../components/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Header from '../components/Header';
 import BottomNavBar from '../components/BottomNavBar';
 import RecommendationPopup from '../components/RecommendationPopup';
 import FilterModal from '../components/FilterModal';
 import { XMLParser } from 'fast-xml-parser';
 import { useFocusEffect } from '@react-navigation/native';
+import ProductItem from '../components/ProductItem';
 
 export default function HomeScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Home');
-  const { addToCart } = useCart();
-  const { addToWishlist, removeFromWishlist, isInWishlist, wishlistItems, refreshWishlist } = useWishlist();
   const [searchQuery, setSearchQuery] = useState('');
-  const [products, setProducts] = useState([]); // State to hold the fetched products
+  const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const { width } = useWindowDimensions();
-  const numColumns = Math.floor(width / 180);
   const [alertVisible, setAlertVisible] = useState(false);
   const [showRecommendation, setShowRecommendation] = useState(false);
-  const [recommendations, setRecommendations] = useState([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState({
     spicyLevel: null,
@@ -33,7 +29,10 @@ export default function HomeScreen({ navigation }) {
     category: null,
   });
 
-  const wishlistKey = JSON.stringify(wishlistItems.map(item => item.id));
+  const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist, refreshWishlist } = useWishlist();
+  const { width } = useWindowDimensions();
+  const numColumns = Math.floor(width / 180);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -76,10 +75,6 @@ export default function HomeScreen({ navigation }) {
     return unsubscribe;
   }, [navigation]);
 
-  useEffect(() => {
-    applyFilters(searchQuery, filters);
-  }, [products, searchQuery, filters, wishlistKey]);
-
   useFocusEffect(
     useCallback(() => {
       fetchProducts();
@@ -91,47 +86,45 @@ export default function HomeScreen({ navigation }) {
     setAlertVisible(false);
   };
 
-  const handleSearch = (text) => {
+  const handleSearch = useCallback((text) => {
     setSearchQuery(text);
-    applyFilters(text, filters);
-  };
+  }, []);
 
-  const applyFilters = (searchText, filterOptions) => {
+  const applyFilters = useCallback((searchText, filterOptions) => {
     let filtered = products;
 
-    // Apply search filter
     if (searchText) {
       filtered = filtered.filter(product =>
         product.name.toLowerCase().includes(searchText.toLowerCase())
       );
     }
 
-    // Apply spicy level filter
     if (filterOptions.spicyLevel) {
       filtered = filtered.filter(product => product.spicyLevel === filterOptions.spicyLevel);
     }
 
-    // Apply price range filter
     if (filterOptions.priceRange) {
       const [min, max] = filterOptions.priceRange;
       filtered = filtered.filter(product => product.price >= min && product.price <= max);
     }
 
-    // Apply category filter
     if (filterOptions.category) {
       filtered = filtered.filter(product => product.category === filterOptions.category);
     }
 
     setFilteredProducts(filtered);
-  };
+  }, [products]);
 
-  const handleFilterApply = (newFilters) => {
+  useEffect(() => {
+    applyFilters(searchQuery, filters);
+  }, [searchQuery, filters, applyFilters]);
+
+  const handleFilterApply = useCallback((newFilters) => {
     setFilters(newFilters);
     setShowFilterModal(false);
-    applyFilters(searchQuery, newFilters);
-  };
+  }, []);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     const clearedFilters = {
       spicyLevel: null,
       priceRange: null,
@@ -139,53 +132,34 @@ export default function HomeScreen({ navigation }) {
     };
     setFilters(clearedFilters);
     setShowFilterModal(false);
-    applyFilters(searchQuery, clearedFilters);
-  };
+  }, []);
+
+  const memoizedIsInWishlist = useCallback((itemId) => {
+    return isInWishlist(itemId);
+  }, [isInWishlist]);
 
   const renderProductItem = useCallback(({ item }) => (
-    <View style={styles.productItem}>
-      <Image source={item.image} style={styles.productImage} />
-      <View style={styles.productInfo}>
-        <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
-        <Text style={styles.productPrice}>£{item.price.toFixed(2)}</Text>
-      </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={[
-            styles.wishlistButton,
-            isInWishlist(item.id) && styles.wishlistButtonActive
-          ]}
-          onPress={() => {
-            if (isInWishlist(item.id)) {
-              removeFromWishlist(item.id);
-            } else {
-              addToWishlist(item);
-            }
-          }}
-        >
-          <Ionicons 
-            name={isInWishlist(item.id) ? "heart" : "heart-outline"} 
-            size={20} 
-            color={isInWishlist(item.id) ? "#FFFFFF" : "#E40421"} 
-          />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.addToCartButton}
-          onPress={() => {
-            addToCart(item);
-          }}
-        >
-          <Text style={styles.addToCartText}>Add to Cart</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  ), [isInWishlist, removeFromWishlist, addToWishlist]);
+    <ProductItem
+      item={item}
+      isInWishlist={memoizedIsInWishlist}
+      addToWishlist={addToWishlist}
+      removeFromWishlist={removeFromWishlist}
+      addToCart={addToCart}
+    />
+  ), [memoizedIsInWishlist, addToWishlist, removeFromWishlist, addToCart]);
 
-  const handleRecommendationComplete = (recommendedFilters) => {
+  const getItemLayout = useCallback((data, index) => ({
+    length: 250,
+    offset: 250 * index,
+    index,
+  }), []);
+
+  const handleRecommendationComplete = useCallback((recommendedFilters) => {
     setFilters(recommendedFilters);
     setShowRecommendation(false);
-    applyFilters(searchQuery, recommendedFilters);
-  };
+  }, []);
+
+  const memoizedFilteredProducts = useMemo(() => filteredProducts, [filteredProducts]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -220,12 +194,16 @@ export default function HomeScreen({ navigation }) {
       </TouchableOpacity>
 
       <FlatList
-        data={filteredProducts}
+        data={memoizedFilteredProducts}
         renderItem={renderProductItem}
         keyExtractor={item => item.id}
         numColumns={numColumns}
         contentContainerStyle={styles.productList}
-        key={`${numColumns}-${wishlistKey}`}
+        getItemLayout={getItemLayout}
+        removeClippedSubviews={true}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
       />
 
       <BottomNavBar navigation={navigation} activeTab="Home" />
@@ -240,7 +218,7 @@ export default function HomeScreen({ navigation }) {
       <RecommendationPopup
         visible={showRecommendation}
         onClose={() => setShowRecommendation(false)}
-        navigation={navigation}
+        onComplete={handleRecommendationComplete}
       />
 
       <FilterModal
@@ -250,21 +228,11 @@ export default function HomeScreen({ navigation }) {
         onClear={handleClearFilters}
         currentFilters={filters}
       />
-
-      <RecommendationPopup
-        visible={showRecommendation}
-        onClose={() => setShowRecommendation(false)}
-        onComplete={handleRecommendationComplete}
-      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
   container: {
     flex: 1,
     backgroundColor: '#000000',
@@ -273,43 +241,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     backgroundColor: '#121212',
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logo: {
-    width: 150,
-    height: 30,
-  },
-  profileIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-  },
-  cartBadge: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    backgroundColor: '#E40421',
-    borderRadius: 10,
-    width: 18,
-    height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cartBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontFamily: 'GothamBold',
   },
   searchBar: {
     flexDirection: 'row',
@@ -327,92 +258,6 @@ const styles = StyleSheet.create({
   },
   productList: {
     padding: 10,
-  },
-  productItem: {
-    flex: 1,
-    margin: 5,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 10,
-    padding: 15,
-    justifyContent: 'space-between',
-    minHeight: 250,
-  },
-  productInfo: {
-    flex: 1,
-  },
-  productImage: {
-    width: 120,
-    height: 120,
-    alignSelf: 'center',
-    marginBottom: 10,
-    resizeMode: 'contain',
-  },
-  productName: {
-    fontFamily: 'GothamBold',
-    fontSize: 14,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 5,
-    flexWrap: 'wrap',
-  },
-  productPrice: {
-    fontFamily: 'GothamBook',
-    fontSize: 14,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  wishlistButton: {
-    backgroundColor: '#2A2A2A',
-    padding: 8,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  wishlistButtonActive: {
-    backgroundColor: '#E40421',
-  },
-  addToCartButton: {
-    backgroundColor: '#E40421',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    flex: 1,
-    marginLeft: 10,
-  },
-  addToCartText: {
-    fontFamily: 'GothamBold',
-    fontSize: 12,
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#121212',
-    paddingVertical: 10,
-    // paddingBottom: add for ios
-    borderTopWidth: 1,
-    borderTopColor: '#2A2A2A',
-  },
-  navItem: {
-    alignItems: 'center',
-  },
-  navText: {
-    fontFamily: 'GothamBook',
-    fontSize: 12,
-    color: '#999999',
-    marginTop: 5,
-  },
-  activeNavText: {
-    color: '#FFFFFF',
   },
   recommendationButton: {
     backgroundColor: '#1A1A1A',
@@ -441,23 +286,5 @@ const styles = StyleSheet.create({
     fontFamily: 'GothamBook',
     fontSize: 12,
     color: '#999999',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  wishlistButton: {
-    backgroundColor: '#2A2A2A',
-    padding: 8,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonText: {
-    fontFamily: 'GothamBold',
-    fontSize: 12,
-    color: '#FFFFFF',
-    textAlign: 'center',
   },
 });
